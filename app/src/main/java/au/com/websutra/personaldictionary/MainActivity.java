@@ -14,51 +14,41 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
-import au.com.websutra.personaldictionary.Adapters.MyListViewAdapter;
-
 
 public class MainActivity extends AppCompatActivity {
+    // For the SimpleCursorAdapter to match the UserDictionary columns to layout items.
+    private static final String[] COLUMNS_TO_BE_BOUND = new String[]{
+            UserDictionary.Words._ID,
+            UserDictionary.Words.WORD,
+            UserDictionary.Words.FREQUENCY
+    };
+    private static final int[] LAYOUT_ITEMS_TO_FILL = new int[]{
+            R.id.textView_list_item_id,
+            R.id.textView_list_item_word,
+            R.id.textView_list_item_frequency
+    };
     private ArrayList<DictionaryObject> list = new ArrayList<DictionaryObject>();
     private ListView listView;
+    private SimpleCursorAdapter cursorAdapter;
     private TextView tHeading;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         // Get the TextView which will be populated with the Dictionary ContentProvider data.
-        tHeading=(TextView)findViewById(R.id.textView_dictionary);
+        tHeading = (TextView) findViewById(R.id.textView_dictionary);
         listView = (ListView) findViewById(R.id.listView_dictionary);
         // Get the ContentResolver which will send a message to the ContentProvider
         ContentResolver resolver = getContentResolver();
         // Get a Cursor containing all of the rows in the Words table
         Cursor cursor = resolver.query(UserDictionary.Words.CONTENT_URI, null, null, null, null);
         Log.d("Test", UserDictionary.Words.CONTENT_URI.toString());
-        // Surround the cursor in a try statement so that the finally block will eventually execute
-        // Surround the cursor in a try statement so that the finally block will eventually execute
-        try {
-            // Get the index of the column containing the actual words, using
-            // UserDictionary.Words.WORD, which is the header of the word column.
-            int wordColumnIndex = cursor.getColumnIndex(UserDictionary.Words.WORD);
-            int frequencyColumnIndex = cursor.getColumnIndex(UserDictionary.Words.FREQUENCY);
-            int idColumnIndex = cursor.getColumnIndex(UserDictionary.Words._ID);
-
-            // Iterates through all returned rows in the cursor.
-            while (cursor.moveToNext()) {
-                // Use that index to extract the String value of the word
-                // at the current row the cursor is on.
-                DictionaryObject temp = new DictionaryObject();
-                temp.id = cursor.getInt(idColumnIndex);
-                temp.frequency = cursor.getInt(frequencyColumnIndex);
-                temp.word = cursor.getString(wordColumnIndex);
-                //Log.d("Each row: ", temp.id + "  " + temp.word + "  " + temp.frequency);
-                list.add(temp);
-            }
-            tHeading.setText("The user dictionary contains:  "+cursor.getCount()+" entries");
-            listView.setAdapter(new MyListViewAdapter(this, list));
-        } finally {
-            // Always close your cursor to avoid memory leaks
-            cursor.close();
-        }
+        tHeading.setText("The UserDictionary contains: "+cursor.getCount()+" entries");
+        // Set the Adapter to fill the list_item layout with data from the Cursor.
+        cursorAdapter = new SimpleCursorAdapter(this, R.layout.list_item, cursor, COLUMNS_TO_BE_BOUND, LAYOUT_ITEMS_TO_FILL, 0);
+        // Attach the adapter to the ListView.
+        listView.setAdapter(cursorAdapter);
     }
 
     @Override
